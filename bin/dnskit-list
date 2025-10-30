@@ -1,0 +1,45 @@
+#!/bin/bash
+# dnskit-list - List all zones in Cloudflare account
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/common.sh"
+source "${SCRIPT_DIR}/../lib/cloudflare.sh"
+
+show_usage() {
+  cat << EOF
+Usage: dnskit list [options]
+
+List all DNS zones in your Cloudflare account.
+
+Options:
+  -h, --help  Show this help message
+
+Examples:
+  dnskit list
+EOF
+}
+
+main() {
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -h|--help)
+        show_usage
+        exit 0
+        ;;
+      *)
+        log_error "Unknown option: $1"
+        show_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  check_credentials
+
+  list_cf_zones
+}
+
+main "$@"

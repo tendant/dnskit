@@ -18,6 +18,8 @@ dnskit v${VERSION} - DNS Management Toolkit
 Usage: dnskit <command> [options]
 
 Commands:
+  test        Test Cloudflare API connection
+  list        List all zones in your Cloudflare account
   fetch       Fetch DNS records from Cloudflare
   backup      Backup DNS records to a file
   preview     Preview DNS changes without applying them
@@ -51,6 +53,12 @@ main() {
   shift
 
   case $command in
+    test)
+      "${SCRIPT_DIR}/dnskit-test" "$@"
+      ;;
+    list)
+      "${SCRIPT_DIR}/dnskit-list" "$@"
+      ;;
     fetch)
       "${SCRIPT_DIR}/dnskit-fetch" "$@"
       ;;
