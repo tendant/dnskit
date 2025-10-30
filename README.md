@@ -85,9 +85,27 @@ D("example.com", REG_NONE, DnsProvider(DSP_CLOUDFLARE),
 
 ## Usage
 
+### Test Connection
+
+Test your Cloudflare API credentials:
+
+```bash
+dnskit test
+```
+
+This verifies that your API token is working and shows a sample of your zones.
+
+### List Zones
+
+List all zones in your Cloudflare account:
+
+```bash
+dnskit list
+```
+
 ### Fetch DNS Records
 
-Fetch and display DNS records from Cloudflare:
+Fetch and display DNS records from Cloudflare in raw JSON format:
 
 ```bash
 # Fetch records in JSON format (default)
@@ -99,6 +117,28 @@ dnskit fetch example.com -f yaml
 # Save to a file
 dnskit fetch example.com -o records.json
 ```
+
+### Export DNS Records
+
+Export DNS records to dnscontrol format (JavaScript) that you can edit and reapply:
+
+```bash
+# Export to default location (config/dnsconfig.js)
+dnskit export example.com
+
+# Export to custom file
+dnskit export example.com -o my-dns-config.js
+
+# Append multiple domains to one file
+dnskit export example.com -o config/dnsconfig.js
+dnskit export another-domain.com -o config/dnsconfig.js -a
+```
+
+This creates a `dnsconfig.js` file that you can:
+1. Edit to add/remove/modify DNS records
+2. Validate with `dnskit validate`
+3. Preview changes with `dnskit preview`
+4. Apply with `dnskit apply`
 
 ### Backup DNS Records
 
@@ -152,7 +192,33 @@ dnskit apply --force
 
 **WARNING**: This modifies your live DNS records. Always run `dnskit preview` first!
 
-## Workflow Example
+## Workflow Examples
+
+### Starting Fresh: Export Existing DNS
+
+If you want to manage existing DNS records with dnskit:
+
+```bash
+# 1. Test your connection
+dnskit test
+
+# 2. Export existing DNS to dnscontrol format
+dnskit export example.com
+
+# 3. Review the generated configuration
+cat config/dnsconfig.js
+
+# 4. Make changes to the file
+vim config/dnsconfig.js
+
+# 5. Preview what will change
+dnskit preview
+
+# 6. Apply the changes
+dnskit apply
+```
+
+### Regular DNS Management
 
 Typical workflow for managing DNS:
 
@@ -173,11 +239,29 @@ dnskit preview
 dnskit apply
 ```
 
+### Managing Multiple Domains
+
+Export and manage multiple domains in one configuration file:
+
+```bash
+# Export all your domains
+dnskit export example.com -o config/dnsconfig.js
+dnskit export another-domain.com -o config/dnsconfig.js -a
+dnskit export third-domain.com -o config/dnsconfig.js -a
+
+# Now you can manage all domains together
+dnskit preview
+dnskit apply
+```
+
 ## Commands Reference
 
 | Command | Description |
 |---------|-------------|
-| `dnskit fetch <domain>` | Fetch DNS records from Cloudflare |
+| `dnskit test` | Test Cloudflare API connection and credentials |
+| `dnskit list` | List all zones in your Cloudflare account |
+| `dnskit fetch <domain>` | Fetch DNS records in JSON/YAML format |
+| `dnskit export <domain>` | Export DNS records to dnscontrol format (editable) |
 | `dnskit backup <domain>` | Create timestamped backup of DNS records |
 | `dnskit preview` | Preview DNS changes without applying |
 | `dnskit apply` | Apply DNS changes to Cloudflare |

@@ -20,7 +20,8 @@ Usage: dnskit <command> [options]
 Commands:
   test        Test Cloudflare API connection
   list        List all zones in your Cloudflare account
-  fetch       Fetch DNS records from Cloudflare
+  fetch       Fetch DNS records from Cloudflare (JSON format)
+  export      Export DNS records to dnscontrol format
   backup      Backup DNS records to a file
   preview     Preview DNS changes without applying them
   apply       Apply DNS changes to Cloudflare
@@ -61,6 +62,9 @@ main() {
       ;;
     fetch)
       "${SCRIPT_DIR}/dnskit-fetch" "$@"
+      ;;
+    export)
+      "${SCRIPT_DIR}/dnskit-export" "$@"
       ;;
     backup)
       "${SCRIPT_DIR}/dnskit-backup" "$@"
