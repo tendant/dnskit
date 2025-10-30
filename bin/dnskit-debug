@@ -1,0 +1,89 @@
+#!/bin/bash
+# dnskit-debug - Debug script to test token extraction and API call
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/common.sh"
+
+echo "=== Debug Information ==="
+echo ""
+echo "1. Config file path:"
+echo "   $CREDS_FILE"
+echo ""
+
+echo "2. Config file exists:"
+if [ -f "$CREDS_FILE" ]; then
+  echo "   YES"
+else
+  echo "   NO"
+  exit 1
+fi
+echo ""
+
+echo "3. Config file contents (sanitized):"
+cat "$CREDS_FILE" | jq '.cloudflare.apitoken = (.cloudflare.apitoken[:10] + "...")'
+echo ""
+
+echo "4. Extracting token (method 1 - jq only):"
+TOKEN1=$(jq -r '.cloudflare.apitoken' "$CREDS_FILE" 2>/dev/null)
+echo "   Length: ${#TOKEN1}"
+echo "   First 10: ${TOKEN1:0:10}"
+echo "   Last 10: ${TOKEN1: -10}"
+echo ""
+
+echo "5. Extracting token (method 2 - jq + tr):"
+TOKEN2=$(jq -r '.cloudflare.apitoken' "$CREDS_FILE" 2>/dev/null | tr -d '[:space:]')
+echo "   Length: ${#TOKEN2}"
+echo "   First 10: ${TOKEN2:0:10}"
+echo "   Last 10: ${TOKEN2: -10}"
+echo ""
+
+echo "6. Comparing tokens:"
+if [ "$TOKEN1" == "$TOKEN2" ]; then
+  echo "   SAME (no whitespace was removed)"
+else
+  echo "   DIFFERENT (whitespace was trimmed)"
+fi
+echo ""
+
+echo "7. Testing API call with method 1 (jq only):"
+RESPONSE1=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X GET "https://api.cloudflare.com/v4/zones?per_page=1" \
+  -H "Authorization: Bearer $TOKEN1" \
+  -H "Content-Type: application/json")
+HTTP1=$(echo "$RESPONSE1" | grep "HTTP_CODE:" | cut -d: -f2)
+BODY1=$(echo "$RESPONSE1" | sed '/HTTP_CODE:/d')
+echo "   HTTP Code: $HTTP1"
+echo "   Success: $(echo "$BODY1" | jq -r '.success')"
+echo ""
+
+echo "8. Testing API call with method 2 (jq + tr):"
+RESPONSE2=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X GET "https://api.cloudflare.com/v4/zones?per_page=1" \
+  -H "Authorization: Bearer $TOKEN2" \
+  -H "Content-Type: application/json")
+HTTP2=$(echo "$RESPONSE2" | grep "HTTP_CODE:" | cut -d: -f2)
+BODY2=$(echo "$RESPONSE2" | sed '/HTTP_CODE:/d')
+echo "   HTTP Code: $HTTP2"
+echo "   Success: $(echo "$BODY2" | jq -r '.success')"
+echo ""
+
+echo "9. Testing with get_cf_token function:"
+source "${SCRIPT_DIR}/../lib/cloudflare.sh"
+TOKEN3=$(get_cf_token)
+echo "   Length: ${#TOKEN3}"
+echo "   First 10: ${TOKEN3:0:10}"
+echo "   Last 10: ${TOKEN3: -10}"
+RESPONSE3=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X GET "https://api.cloudflare.com/v4/zones?per_page=1" \
+  -H "Authorization: Bearer $TOKEN3" \
+  -H "Content-Type: application/json")
+HTTP3=$(echo "$RESPONSE3" | grep "HTTP_CODE:" | cut -d: -f2)
+BODY3=$(echo "$RESPONSE3" | sed '/HTTP_CODE:/d')
+echo "   HTTP Code: $HTTP3"
+echo "   Success: $(echo "$BODY3" | jq -r '.success')"
+echo ""
+
+echo "=== Summary ==="
+echo "All HTTP codes should be 200 if working correctly"
+echo "Method 1 (jq only):      $HTTP1"
+echo "Method 2 (jq + tr):      $HTTP2"
+echo "Method 3 (get_cf_token): $HTTP3"
