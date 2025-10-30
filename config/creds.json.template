@@ -1,0 +1,7 @@
+{
+  "cloudflare": {
+    "TYPE": "CLOUDFLAREAPI",
+    "accountid": "your-cloudflare-account-id",
+    "apitoken": "your-cloudflare-api-token"
+  }
+}

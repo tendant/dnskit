@@ -1,0 +1,23 @@
+# Credentials and configuration
+config/creds.json
+config/dnsconfig.js
+
+# Backups directory
+backups/
+
+# macOS
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
+
+
+.claude/

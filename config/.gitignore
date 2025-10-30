@@ -1,0 +1,5 @@
+# Ignore credentials file (keep only the template)
+creds.json
+
+# Ignore actual DNS configuration (keep only samples)
+dnsconfig.js

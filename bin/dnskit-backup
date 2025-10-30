@@ -1,0 +1,87 @@
+#!/bin/bash
+# dnskit-backup - Backup DNS records with timestamp
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/common.sh"
+source "${SCRIPT_DIR}/../lib/cloudflare.sh"
+
+show_usage() {
+  cat << EOF
+Usage: dnskit backup <domain> [options]
+
+Create a timestamped backup of DNS records from Cloudflare.
+
+Arguments:
+  domain      Domain name to backup
+
+Options:
+  -d, --dir <directory>   Backup directory (default: ./backups)
+  -f, --format <format>   Output format: json (default) or yaml
+  -h, --help              Show this help message
+
+Examples:
+  dnskit backup example.com
+  dnskit backup example.com -d /path/to/backups
+  dnskit backup example.com -f yaml
+EOF
+}
+
+main() {
+  local domain=""
+  local backup_dir="./backups"
+  local format="json"
+
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -d|--dir)
+        backup_dir="$2"
+        shift 2
+        ;;
+      -f|--format)
+        format="$2"
+        shift 2
+        ;;
+      -h|--help)
+        show_usage
+        exit 0
+        ;;
+      *)
+        if [ -z "$domain" ]; then
+          domain="$1"
+          shift
+        else
+          log_error "Unknown option: $1"
+          show_usage
+          exit 1
+        fi
+        ;;
+    esac
+  done
+
+  if [ -z "$domain" ]; then
+    log_error "Domain name is required"
+    show_usage
+    exit 1
+  fi
+
+  check_credentials
+
+  # Create backup directory if it doesn't exist
+  mkdir -p "$backup_dir"
+
+  # Generate timestamped filename
+  local timestamp=$(date +"%Y%m%d_%H%M%S")
+  local extension="json"
+  [ "$format" == "yaml" ] && extension="yaml"
+  local backup_file="${backup_dir}/${domain}_${timestamp}.${extension}"
+
+  # Create backup
+  log_info "Creating backup for $domain..."
+  export_domain_records "$domain" "$format" > "$backup_file"
+  log_success "Backup saved to $backup_file"
+}
+
+main "$@"

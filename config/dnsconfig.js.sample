@@ -1,0 +1,28 @@
+// DNS Configuration Sample
+// This file defines your DNS records using dnscontrol's JavaScript DSL
+
+var REG_NONE = NewRegistrar("none");
+var DSP_CLOUDFLARE = NewDnsProvider("cloudflare");
+
+D("example.com", REG_NONE, DnsProvider(DSP_CLOUDFLARE),
+  // A Records
+  A("@", "192.0.2.1"),
+  A("www", "192.0.2.1"),
+
+  // CNAME Records
+  CNAME("blog", "example.com."),
+  CNAME("shop", "shopify.example.com."),
+
+  // MX Records
+  MX("@", 10, "mail.example.com."),
+
+  // TXT Records
+  TXT("@", "v=spf1 include:_spf.example.com ~all"),
+  TXT("_dmarc", "v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com")
+);
+
+// Add more domains as needed
+// D("another-domain.com", REG_NONE, DnsProvider(DSP_CLOUDFLARE),
+//   A("@", "192.0.2.2"),
+//   A("www", "192.0.2.2")
+// );

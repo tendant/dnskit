@@ -1,0 +1,69 @@
+#!/bin/bash
+# dnskit-apply - Apply DNS changes to Cloudflare
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/common.sh"
+
+show_usage() {
+  cat << EOF
+Usage: dnskit apply [options]
+
+Apply DNS changes to Cloudflare based on your dnsconfig.js file.
+
+Options:
+  --force     Skip confirmation prompt
+  -h, --help  Show this help message
+
+Examples:
+  dnskit apply
+  dnskit apply --force
+
+WARNING: This will modify your live DNS records!
+EOF
+}
+
+confirm_apply() {
+  log_warn "This will apply changes to your LIVE DNS records!"
+  read -p "Are you sure you want to continue? (yes/no): " -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
+    log_info "Aborted"
+    exit 0
+  fi
+}
+
+main() {
+  local force=false
+
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --force)
+        force=true
+        shift
+        ;;
+      -h|--help)
+        show_usage
+        exit 0
+        ;;
+      *)
+        log_error "Unknown option: $1"
+        show_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  if [ "$force" = false ]; then
+    confirm_apply
+  fi
+
+  log_info "Applying DNS changes..."
+  run_dnscontrol push
+
+  log_success "DNS changes applied successfully!"
+}
+
+main "$@"

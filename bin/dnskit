@@ -1,0 +1,84 @@
+#!/bin/bash
+# dnskit - DNS management toolkit using dnscontrol
+# Main CLI entry point
+
+set -e
+
+VERSION="0.1.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source common functions
+source "${SCRIPT_DIR}/../lib/common.sh"
+
+# Show usage information
+show_usage() {
+  cat << EOF
+dnskit v${VERSION} - DNS Management Toolkit
+
+Usage: dnskit <command> [options]
+
+Commands:
+  fetch       Fetch DNS records from Cloudflare
+  backup      Backup DNS records to a file
+  preview     Preview DNS changes without applying them
+  apply       Apply DNS changes to Cloudflare
+  validate    Validate DNS configuration
+  version     Show version information
+  help        Show this help message
+
+Options:
+  -h, --help  Show help for a specific command
+
+Examples:
+  dnskit fetch example.com
+  dnskit backup example.com -o backup.json
+  dnskit preview
+  dnskit apply
+  dnskit validate
+
+For more information, see README.md
+EOF
+}
+
+# Main command router
+main() {
+  if [ $# -eq 0 ]; then
+    show_usage
+    exit 0
+  fi
+
+  local command=$1
+  shift
+
+  case $command in
+    fetch)
+      "${SCRIPT_DIR}/dnskit-fetch" "$@"
+      ;;
+    backup)
+      "${SCRIPT_DIR}/dnskit-backup" "$@"
+      ;;
+    preview)
+      "${SCRIPT_DIR}/dnskit-preview" "$@"
+      ;;
+    apply)
+      "${SCRIPT_DIR}/dnskit-apply" "$@"
+      ;;
+    validate)
+      "${SCRIPT_DIR}/dnskit-validate" "$@"
+      ;;
+    version)
+      echo "dnskit version ${VERSION}"
+      ;;
+    help|--help|-h)
+      show_usage
+      ;;
+    *)
+      log_error "Unknown command: $command"
+      echo ""
+      show_usage
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"

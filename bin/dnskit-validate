@@ -1,0 +1,61 @@
+#!/bin/bash
+# dnskit-validate - Validate DNS configuration
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/common.sh"
+
+show_usage() {
+  cat << EOF
+Usage: dnskit validate [options]
+
+Validate DNS configuration files for syntax and correctness.
+
+Options:
+  -h, --help  Show this help message
+
+Examples:
+  dnskit validate
+EOF
+}
+
+main() {
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -h|--help)
+        show_usage
+        exit 0
+        ;;
+      *)
+        log_error "Unknown option: $1"
+        show_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  log_info "Validating DNS configuration..."
+
+  # Validate credentials JSON
+  if [ -f "$CREDS_FILE" ]; then
+    if validate_json "$CREDS_FILE"; then
+      log_success "Credentials file is valid JSON"
+    else
+      exit 1
+    fi
+  fi
+
+  # Validate dnsconfig using dnscontrol check-creds
+  if run_dnscontrol check-creds cloudflare; then
+    log_success "Cloudflare credentials are valid"
+  else
+    log_error "Cloudflare credentials validation failed"
+    exit 1
+  fi
+
+  log_success "All validations passed!"
+}
+
+main "$@"

@@ -1,0 +1,44 @@
+#!/bin/bash
+# dnskit-preview - Preview DNS changes without applying them
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/common.sh"
+
+show_usage() {
+  cat << EOF
+Usage: dnskit preview [options]
+
+Preview DNS changes without applying them to Cloudflare.
+This shows what would change based on your dnsconfig.js file.
+
+Options:
+  -h, --help  Show this help message
+
+Examples:
+  dnskit preview
+EOF
+}
+
+main() {
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -h|--help)
+        show_usage
+        exit 0
+        ;;
+      *)
+        log_error "Unknown option: $1"
+        show_usage
+        exit 1
+        ;;
+    esac
+  done
+
+  log_info "Previewing DNS changes..."
+  run_dnscontrol preview
+}
+
+main "$@"

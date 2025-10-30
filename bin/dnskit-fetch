@@ -1,0 +1,81 @@
+#!/bin/bash
+# dnskit-fetch - Fetch DNS records from Cloudflare
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/common.sh"
+source "${SCRIPT_DIR}/../lib/cloudflare.sh"
+
+show_usage() {
+  cat << EOF
+Usage: dnskit fetch <domain> [options]
+
+Fetch DNS records from Cloudflare for the specified domain.
+
+Arguments:
+  domain      Domain name to fetch records for
+
+Options:
+  -f, --format <format>   Output format: json (default) or yaml
+  -o, --output <file>     Save output to file instead of stdout
+  -h, --help              Show this help message
+
+Examples:
+  dnskit fetch example.com
+  dnskit fetch example.com -f yaml
+  dnskit fetch example.com -o records.json
+EOF
+}
+
+main() {
+  local domain=""
+  local format="json"
+  local output_file=""
+
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -f|--format)
+        format="$2"
+        shift 2
+        ;;
+      -o|--output)
+        output_file="$2"
+        shift 2
+        ;;
+      -h|--help)
+        show_usage
+        exit 0
+        ;;
+      *)
+        if [ -z "$domain" ]; then
+          domain="$1"
+          shift
+        else
+          log_error "Unknown option: $1"
+          show_usage
+          exit 1
+        fi
+        ;;
+    esac
+  done
+
+  if [ -z "$domain" ]; then
+    log_error "Domain name is required"
+    show_usage
+    exit 1
+  fi
+
+  check_credentials
+
+  # Fetch and output records
+  if [ -n "$output_file" ]; then
+    export_domain_records "$domain" "$format" > "$output_file"
+    log_success "DNS records saved to $output_file"
+  else
+    export_domain_records "$domain" "$format"
+  fi
+}
+
+main "$@"
